@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     struct memory chunk = { 0 }; 
 
     char url[1000];
-    snprintf(url, sizeof(url),"https://eu.wikipedia.org/w/api.php?action=query&titles=%s&prop=extracts&explaintext=1&format=json", argv[1]);
+    snprintf(url, sizeof(url),"https://en.wikipedia.org/w/api.php?action=query&titles=%s&prop=extracts&explaintext=1&format=json", argv[1]);
 
     curl_global_init(CURL_GLOBAL_ALL);
     CURL *handler = curl_easy_init();
