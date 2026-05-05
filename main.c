@@ -27,12 +27,17 @@ size_t write_callback(char *data, size_t size, size_t nmemb, void *clientp) {
     return realsize;
 }
 
-int main() {
-    struct memory chunk = { 0 };
+int main(int argc, char **argv) {
+    struct memory chunk = { 0 }; 
+
+    char url[1000];
+    snprintf(url, sizeof(url),"https://en.wikipedia.org/w/api.php?action=query&titles=%s&prop=extracts&explaintext=1&format=json", argv[1]);
+
     curl_global_init(CURL_GLOBAL_ALL);
     CURL *handler = curl_easy_init();
     if (handler) {
-        curl_easy_setopt(handler, CURLOPT_URL, "https://en.wikipedia.org/w/api.php?action=query&titles=reddit&prop=extracts&explaintext=1&format=json");
+        
+        curl_easy_setopt(handler, CURLOPT_URL, url);
         curl_easy_setopt(handler, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
         curl_easy_setopt(handler, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(handler, CURLOPT_WRITEDATA, (void *)&chunk);
