@@ -79,6 +79,7 @@ int main(int argc, char **argv)
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &chunk);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
 
     CURLcode res = curl_easy_perform(curl);
