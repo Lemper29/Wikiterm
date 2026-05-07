@@ -5,9 +5,9 @@ RELEASE_FLAGS ?= -O3 -DNDEBUG
 
 LDFLAGS ?= -lcurl
 
-SRCDIR := .
+SRCDIR := ./src
 BUILDDIR := temp
-BINDIR := .
+BINDIR := build
 
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRCS))

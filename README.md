@@ -17,7 +17,7 @@ make
 ## Usage
 
 ```bash
-./wiki "Article Title"
+./build/wiki "Article Title"
 ```
 
 ## Technical Specification
