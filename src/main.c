@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
-#include "cJSON.h"
+#include "../include/cJSON.h"
 
 struct memory {
     char *data;
