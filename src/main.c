@@ -6,6 +6,9 @@
 #include <string.h>
 #include <curl/curl.h>
 #include "cJSON.h"
+#include "fetch.h"
+#include "parse.h"
+#include "display.h"
 
 struct memory {
     char *data;
@@ -26,12 +29,6 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void *us
     mem->size += realsize;
     mem->data[mem->size] = '\0';
     return realsize;
-}
-
-static char *url_encode(CURL *curl, const char *s)
-{
-    if (!s) return NULL;
-    return curl_easy_escape(curl, s, 0);
 }
 
 int main(int argc, char **argv)
@@ -67,80 +64,26 @@ int main(int argc, char **argv)
                      encoded);
     curl_free(encoded);
 
-    if (n < 0 || (size_t)n >= sizeof(url)) {
-        fprintf(stderr, "URL too long\n");
+    FetchBuffer buf = {0};
+    int err = fetch_url(url, &buf, 30L);
+    if (err != EXIT_SUCCESS) {
+        fprintf(stderr, "Failed to fetch url\n");
+        free(buf.data); 
         curl_easy_cleanup(curl);
         curl_global_cleanup();
         return EXIT_FAILURE;
     }
 
-    struct memory chunk = { .data = NULL, .size = 0 };
-
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "wiki-extract/1.0");
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &chunk);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
-    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30L);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-
-    CURLcode res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-        fprintf(stderr, "Request failed: %s\n", curl_easy_strerror(res));
-        free(chunk.data);
+    char *text = parse_extract(buf.data);
+    if (!text) {
+        fprintf(stderr, "No extract found\n");
+        fetch_free(&buf);
         curl_easy_cleanup(curl);
         curl_global_cleanup();
         return EXIT_FAILURE;
     }
 
-    long http_code = 0;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-    if (http_code < 200 || http_code >= 300) {
-        fprintf(stderr, "HTTP error: %ld\n", http_code);
-        free(chunk.data);
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
-        return EXIT_FAILURE;
-    }
-
-    cJSON *json = cJSON_Parse(chunk.data ? chunk.data : "");
-    if (!json) {
-        fprintf(stderr, "Failed to parse JSON\n");
-        free(chunk.data);
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
-        return EXIT_FAILURE;
-    }
-
-    cJSON *query = cJSON_GetObjectItemCaseSensitive(json, "query");
-    cJSON *pages = query ? cJSON_GetObjectItemCaseSensitive(query, "pages") : NULL;
-    if (!pages) {
-        fprintf(stderr, "No pages in response\n");
-        cJSON_Delete(json);
-        free(chunk.data);
-        curl_easy_cleanup(curl);
-        curl_global_cleanup();
-        return EXIT_FAILURE;
-    }
-
-    const cJSON *page = NULL;
-    cJSON_ArrayForEach(page, pages) {
-        cJSON *extract = cJSON_GetObjectItemCaseSensitive((cJSON *)page, "extract");
-        if (cJSON_IsString(extract) && (extract->valuestring != NULL)) {
-            FILE *less = popen("less -R", "w");
-            if (less) {
-                fprintf(less, "%s\n", extract->valuestring);
-                pclose(less);
-            } else {
-                puts(extract->valuestring);
-            }
-            break;
-        }
-    }
-
-    cJSON_Delete(json);
-    free(chunk.data);
+    free(text);
     curl_easy_cleanup(curl);
     curl_global_cleanup();
     return EXIT_SUCCESS;
