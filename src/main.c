@@ -59,14 +59,14 @@ int main(int argc, char **argv)
     }
 
     char url[1024];
-    int n = snprintf(url, sizeof(url),
+    snprintf(url, sizeof(url),
                      "https://en.wikipedia.org/w/api.php?action=query&titles=%s&prop=extracts&explaintext=1&format=json",
                      encoded);
     curl_free(encoded);
 
     FetchBuffer buf = {0};
     int err = fetch_url(url, &buf, 30L);
-    if (err != EXIT_SUCCESS) {
+    if (err != 0) {
         fprintf(stderr, "Failed to fetch url\n");
         free(buf.data); 
         curl_easy_cleanup(curl);
@@ -83,7 +83,10 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    display_text(text);
+
     free(text);
+    fetch_free(&buf);
     curl_easy_cleanup(curl);
     curl_global_cleanup();
     return EXIT_SUCCESS;
