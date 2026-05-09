@@ -1,13 +1,15 @@
+INCDIR := include
+SRCDIR := src
+BUILDDIR := temp
+BINDIR := build
+
 CC ?= gcc
 CFLAGS ?= -Wall -Wextra -Wpedantic -std=c11 -O2
 DEBUG_FLAGS ?= -g -O0
 RELEASE_FLAGS ?= -O3 -DNDEBUG
-
 LDFLAGS ?= -lcurl
 
-SRCDIR := ./src
-BUILDDIR := temp
-BINDIR := build
+CPPFLAGS += -I$(INCDIR)
 
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS := $(patsubst $(SRCDIR)/%.c,$(BUILDDIR)/%.o,$(SRCS))
@@ -38,7 +40,7 @@ $(TARGET): $(OBJS)
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c
 	@printf "CC $< -> $@\n"
-	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -MMD -MP -c $< -o $@
 
 dirs:
 	@mkdir -p $(BUILDDIR) $(BINDIR)
@@ -51,3 +53,4 @@ clean:
 
 distclean: clean
 	@printf "No extra distribution artifacts to remove.\n"
+
